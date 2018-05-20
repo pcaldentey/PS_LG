@@ -5,23 +5,34 @@ var EJ2 = {
     url1: "http://s3.amazonaws.com/logtrust-static/test/test/data1.json",
     url2: "http://s3.amazonaws.com/logtrust-static/test/test/data2.json",
     url3: "http://s3.amazonaws.com/logtrust-static/test/test/data3.json",
+    /*
+     * This function formats json data from data*.json urls in a common format.
+     * Group all info by category and adds all values from same date and same category,
+     * storing results in EJ.data
+     */
     extractData: function (values) {
         values.forEach(function(element) {
+            // Formatting info
+            // data1.json
             if (typeof element.d != "undefined" ) {
                 var date = new Date(element.d);
                 date_str = date.toISOString().split('T')[0];
                 var category = element.cat.toUpperCase();
                 var value = element.value;
+            // data2.json
             } else if (typeof element.myDate != "undefined" ) {
                 var date_str = element.myDate;
                 var category = element.categ;
                 var value = element.val;
+            // data3.json
             } else {
                 var m = element.raw.match(/.*(\d{4}-\d{2}-\d{2}).*#(.*)#/i);
                 var date_str = m[1];
                 var category = m[2];
                 var value = element.val;
             }
+
+            // Creates element in data object or add it to an existent one
             if (EJ2.data[category] != undefined) {
                 if (EJ2.data[category][date_str] != undefined) {
                     EJ2.data[category][date_str] = EJ2.data[category][date_str] + value;
@@ -37,6 +48,10 @@ var EJ2 = {
             EJ2.not_grouped_data.push({'date': date_str, 'category':category, 'value':value});
         });
     },
+    /*
+     * Utility. This function makes ajax call and pass result to 'callback' function. In out case
+     * extractData.
+     */
     ajaxCall: function (url ,callback) {
         var xmlhttp = new XMLHttpRequest();
         xmlhttp.onreadystatechange = function() {
@@ -54,6 +69,9 @@ var EJ2 = {
         xmlhttp.open("GET", url, false);
         xmlhttp.send();
     },
+    /*
+     *  Draws Line chart. Receives layerId, title and formatted series with Highcharts requirements (data).
+     */
     drawLineChart: function (layerId, title, data) {
         Highcharts.chart(layerId, {
             title: {
@@ -77,6 +95,10 @@ var EJ2 = {
             series: data,
         });
     },
+
+    /*
+     *  Draws Pie chart. Receives layerId, title and formatted series with Highcharts requirements (data).
+     */
     drawPieChart: function (layerId, title, data) {
         Highcharts.chart(layerId, {
             chart: {
@@ -111,6 +133,9 @@ var EJ2 = {
             }]
         });
     },
+    /*
+     * Formats series as required by Highcharts Line chart
+     */
     getLineSeriesData: function () {
         var series = [];
         var data = [];
@@ -127,7 +152,9 @@ var EJ2 = {
 
         return series;
     },
-
+    /*
+     * Formats series as required by Highcharts Pie chart
+     */
     getPieSeriesData: function () {
         var total = 0;
         var total_serie = 0;
@@ -153,6 +180,9 @@ var EJ2 = {
         });
         return series;
     },
+    /*
+     * Main function. It will be triggered once all content is loaded
+     */
     run: function () {
         // Get, extract and group data from urls
         EJ2.ajaxCall(EJ2.url1, EJ2.extractData);
@@ -163,6 +193,12 @@ var EJ2 = {
         EJ2.drawLineChart('lineContainer', 'Line Chart Ejercicio 2', EJ2.getLineSeriesData());
         EJ2.drawPieChart('pieContainer', 'Pie Chart Ejercicio 2', EJ2.getPieSeriesData());
 
+        console.log(EJ2.data);
+  //      console.log(Object.keys(EJ2.data).length);
+
+       // setTimeout(function(){ 
+       // console.log(Object.keys(EJ2.data));
+        //}, 3000);
     },
 }
 
