@@ -1,7 +1,7 @@
 // Ejecicio 2 global namespace
 var EJ2 = { 
     data: {},
-    notgroupeddata: [],
+    not_grouped_data: [],
     url1: "http://s3.amazonaws.com/logtrust-static/test/test/data1.json",
     url2: "http://s3.amazonaws.com/logtrust-static/test/test/data2.json",
     url3: "http://s3.amazonaws.com/logtrust-static/test/test/data3.json",
@@ -34,7 +34,7 @@ var EJ2 = {
                 EJ2.data[category][date_str] = value;
 
             }
-            EJ2.notgroupeddata.push({'date': date_str, 'category':category, 'value':value});
+            EJ2.not_grouped_data.push({'date': date_str, 'category':category, 'value':value});
         });
     },
     ajaxCall: function (url ,callback) {
@@ -54,54 +54,27 @@ var EJ2 = {
         xmlhttp.open("GET", url, false);
         xmlhttp.send();
     },
-    drawLineChart: function () {
-        Highcharts.chart('container', {
+    drawLineChart: function (layerId, title, data) {
+        Highcharts.chart(layerId, {
             title: {
-                text: 'Solar Employment Growth by Sector, 2010-2016'
-            },
-            subtitle: {
-                text: 'Source: thesolarfoundation.com'
-            },
-            yAxis: {
-                title: {
-                    text: 'Number of Employees'
-                }
+                text: title
             },
             legend: {
                 layout: 'vertical',
                 align: 'right',
                 verticalAlign: 'middle'
             },
-            plotOptions: {
-                series: {
-                    label: {
-                        connectorAllowed: false
-                    },
-                    pointStart: 2010
+            xAxis: {
+                type: 'datetime',
+                dateTimeLabelFormats: { // don't display the dummy year
+                    month: '%e. %b',
+                    year: '%b'
+                },
+                title: {
+                    text: 'Date'
                 }
             },
-            series: [{
-                name: 'Installation',
-                data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175]
-            }, {
-                name: 'Manufacturing',
-                data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434]
-            }],
-
-            responsive: {
-                rules: [{
-                    condition: {
-                        maxWidth: 500
-                    },
-                    chartOptions: {
-                        legend: {
-                            layout: 'horizontal',
-                            align: 'center',
-                            verticalAlign: 'bottom'
-                        }
-                    }
-                }]
-            }
+            series: data,
         });
     },
     drawPieChart: function (layerId, title, data) {
@@ -134,10 +107,27 @@ var EJ2 = {
             series: [{
                 name: 'Percentage',
                 colorByPoint: true,
-                data: data 
+                data: data
             }]
         });
     },
+    getLineSeriesData: function () {
+        var series = [];
+        var data = [];
+
+        for (var [key, obj] of Object.entries(EJ2.data)) {
+            data = [];
+            ordered_dates = Object.keys(EJ2.data[key]).sort();
+            ordered_dates.forEach(function(element) {
+                var d = new Date(element);
+                data.push([ d.getTime(), parseFloat(EJ2.data[key][element]) ]);
+            });
+            series.push({ "name": key, "data": data });
+        }
+
+        return series;
+    },
+
     getPieSeriesData: function () {
         var total = 0;
         var total_serie = 0;
@@ -170,6 +160,7 @@ var EJ2 = {
         EJ2.ajaxCall(EJ2.url3, EJ2.extractData);
 
         // Draw charts
+        EJ2.drawLineChart('lineContainer', 'Line Chart Ejercicio 2', EJ2.getLineSeriesData());
         EJ2.drawPieChart('pieContainer', 'Pie Chart Ejercicio 2', EJ2.getPieSeriesData());
 
     },
